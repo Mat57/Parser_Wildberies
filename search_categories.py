@@ -151,9 +151,6 @@ def from_txt_to_excel():
     # df.to_excel('output.xlsx', 'Sheet1')
 
 
-# Получение данных по конкретной категории
-# def get_data_by_category():
-
 
 if __name__ == '__main__':
     # res = 1
