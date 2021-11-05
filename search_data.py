@@ -26,12 +26,10 @@ def save_to_csv(cards):
             writer.writerow((card['first_coast'], card['second_coast'], card['company'], card['type']))
 
 
-
-
 def get_data_from_page(number_of_page, url):
     list_cards = []
-    number_of_page=2
-    for i in range(1, number_of_page):
+    number_of_page = 2
+    for i in range(1, number_of_page + 1):
         new_url = url + '?page=' + str(i)
         response = requests.get(url=new_url, headers=headers)
         soup = bs(response.text, 'html.parser')
@@ -41,16 +39,20 @@ def get_data_from_page(number_of_page, url):
                 card_dict = {}
                 try:
                     first_coast = \
-                        card.find('span', class_='price-commission__price').text.replace('\n', '').replace(' ', '').split('₽')[
+                        card.find('span', class_='price-commission__price').text.replace('\n', '').replace(' ',
+                                                                                                           '').split(
+                            '₽')[
                             0]
                 except:
-                    first_coat=card.find('span', class_="price").text.split()[0]
+                    first_coat = card.find('span', class_="price").text.split()[0]
                 try:
                     second_coast = \
-                        card.find('span', class_='price-commission__price').text.replace('\n', '').replace(' ', '').split('₽')[
+                        card.find('span', class_='price-commission__price').text.replace('\n', '').replace(' ',
+                                                                                                           '').split(
+                            '₽')[
                             1]
                 except:
-                    second_coast=card.find('span', class_="price").text.split()[0]
+                    second_coast = card.find('span', class_="price").text.split()[0]
                 company = card.find('div', class_="product-card__brand-name").text.replace('\n', '').split('/')[0]
                 type = card.find('div', class_="product-card__brand-name").text.replace('\n', '').split('/')[1]
                 card_dict['first_coast'] = first_coast
@@ -62,8 +64,8 @@ def get_data_from_page(number_of_page, url):
                 pass
     save_to_csv(list_cards)
 
+
 if __name__ == '__main__':
-    url = "https://www.wildberries.ru/catalog/detyam/shkola/odezhda-dlya-malchikov/longslivy"
-    # number_of_pages = get_count_page(url)
-    number_of_pages = 8
+    url = str(input('Добавьте ссылку на категорию:')).replace('\n', '')
+    number_of_pages = get_count_page(url)
     get_data_from_page(number_of_pages, url)

@@ -14,12 +14,13 @@ from selenium.webdriver.common.by import By
 from fake_useragent import UserAgent
 import asyncio
 import aiohttp
+import os
 
 ua = UserAgent()
 
 categories = {}
 
-path_itog = 'list_categories/Sub sub categories/itog.txt'
+path_itog = 'list_categories/itog.txt'
 
 # proxies = {"https":"https://23.224.55.156:59394",
 #            "http":"http://121.139.218.165:31409"}
@@ -28,7 +29,8 @@ black_list_category = ['Видеообзоры', 'Авиабилеты', 'Экс
                        'Акции', 'Товары для взрослых', 'Алкоголь']
 
 headers = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,"
+              "application/signed-exchange;v=b3;q=0.9",
     "user-agent": ua.random
 }
 
@@ -49,20 +51,10 @@ def write_dict(path, dict_to_write):
             out.write('{}={}\n'.format(key, val))
 
 
-# Считывание файла в словарь
-def read_dict(path):
-    d = {}
-    with open(path) as file:
-        for line in file:
-            key, *value = line.split('=')
-            d[key] = value[0].replace('\n', '')
-    return d
-
-
 # Получение подкатегорий
 def get_sub_category():
     global categories
-    module_logger = logging.getLogger("main.get_sub_category")
+    logging.getLogger("main.get_sub_category")
     logger = logging.getLogger("main.get_sub_category_add")
     sub_categories = {}
     for key, val in categories.items():
@@ -91,7 +83,7 @@ def get_sub_category():
 # Получение списка категорий: Мужчинам, Женщинам, Детям и т.п.
 def get_category():
     global categories
-    module_logger = logging.getLogger("main.get_category")
+    logging.getLogger("main.get_category")
     logger = logging.getLogger("main.get_category_add")
     url = 'https://www.wildberries.ru/'
     page = requests.get(url, headers=headers)
@@ -117,13 +109,11 @@ def get_category():
 # Получение подкатегорий второго уровня
 def get_sub_sub_category():
     global categories
-    module_logger = logging.getLogger("main.get_sub_sub_category")
+    logging.getLogger("main.get_sub_sub_category")
     logger = logging.getLogger("main.get_sub_sub_category_add")
     sub_categories = {}
-    categories['Мужчинам'] = 'https://www.wildberries.ru/catalog/muzhchinam/dlya-vysokih'
     for key, val in categories.items():
         try:
-
             response = requests.get(url=val)
             soup = bs(response.text, "html.parser")
             main_block = soup.find('ul', class_='sidemenu')
@@ -137,36 +127,24 @@ def get_sub_sub_category():
             sub_categories[key] = val
             pass
     categories = sub_categories
-    write_dict('list_categories/itog.txt', categories)
+    if os.path.exists(path_itog):
+        os.remove(path_itog)
+    else:
+        pass
+    write_dict(path_itog, categories)
 
 
+# Формирование excel
 def from_txt_to_excel():
     with open('list_categories/itog.txt', 'r') as in_file:
         stripped = (line.strip() for line in in_file)
         lines = (line.split("=") for line in stripped if line)
-        with open('list_categories/itog.csv', 'w',newline='') as out_file:
+        with open('list_categories/itog.csv', 'w', newline='') as out_file:
             writer = csv.writer(out_file, delimiter='=')
             writer.writerows(lines)
-    # df = pd.read_csv('list_categories/itog.txt', sep='=')  # can replace with df = pd.read_table('input.txt') for '\t'
-    # df.to_excel('output.xlsx', 'Sheet1')
-
 
 
 if __name__ == '__main__':
-    # res = 1
-    # if res == 1:
-    #     if os.path.exists(main_categories_path):
-    #         if os.path.exists(sub_categories_path):
-    #             get_sub_sub_category(sub_categories_path)
-    #         else:
-    #             get_sub_category(main_categories_path)
-    #     elif os.path.exists('D:\Parser_Wildberies\Подкатегории'):
-    #         get_category()
-    #     else:
-    #         get_data_by_category()
-    #     get_sub_category()
-    #     merger_url()
-    #     get_sub_category('Все категории.txt')
     logger = logging.getLogger("main")
     logger.setLevel(logging.INFO)
     fh = logging.FileHandler("log/cateroies.log")
@@ -176,10 +154,8 @@ if __name__ == '__main__':
     logger.addHandler(fh)
     logger.addHandler(console_out)
     logger.info("Program started")
-    # get_category()
-    # get_sub_category()
-    # get_sub_sub_category()
+    get_category()
+    get_sub_category()
+    get_sub_sub_category()
     from_txt_to_excel()
-
-
     logger.info("Done!")
